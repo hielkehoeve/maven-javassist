@@ -1,6 +1,23 @@
-*.class
+target
+*.log
+.settings
+.project
+.classpath
+.factorypath
+.DS_Store
+ouderportaal/src/webapp/assets/stylesheets/.sass-cache
+selenium/*/result
+xcuserdata
+pmapp/pmapp/entities/generated/*
+pmapp/Pods/
+Podfile.lock
+rebel.xml
+/pmapp/DigDag PM App.xcworkspace/xcshareddata/
+/ouderapp/ios/OuderApp/Pods/
+/ouderapp/android/bin/*
+/ouderapp/android/gen/*
 
-# Package Files #
-*.jar
-*.war
-*.ear
+
+/ouderapp/ios/OuderApp/OuderApp.xcworkspace/.LSOverride
+/ouderapp/ios/OuderApp/OuderApp/entities/generated/
+
