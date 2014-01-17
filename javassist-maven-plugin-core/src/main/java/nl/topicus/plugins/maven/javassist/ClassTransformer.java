@@ -38,7 +38,7 @@ public abstract class ClassTransformer {
 		return filterPackageName;
 	}
 
-	protected abstract void applyTransformations(CtClass classToTransform)
+	protected abstract void applyTransformations(ClassPool classPool, CtClass classToTransform)
 			throws Exception;
 
 	protected boolean filterCtClass(final CtClass candidateClass) throws Exception {
@@ -96,7 +96,7 @@ public abstract class ClassTransformer {
 						classPool.importPackage(className);
 						final CtClass candidateClass = classPool.get(className);
 						if (filterCtClass(candidateClass)) {
-							applyTransformations(candidateClass);
+							applyTransformations(classPool, candidateClass);
 							writeFile(candidateClass, classPath);
 						}
 					} catch (final NotFoundException e) {
@@ -104,7 +104,7 @@ public abstract class ClassTransformer {
 								.warn(String
 										.format("Class %s could not not be resolved due to dependencies not found on "
 												+ "current classpath (usually your class depends on \"provided\" scoped dependencies).",
-												className));
+												className), e);
 						continue;
 					} catch (final Exception ex) {
 						getLogger()
