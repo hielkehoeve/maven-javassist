@@ -13,11 +13,13 @@ import java.util.List;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -26,6 +28,9 @@ import com.google.common.collect.Lists;
 public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	private static final Class<ClassTransformer> TRANSFORMER_TYPE = ClassTransformer.class;
+	
+	@Component
+	private BuildContext buildContext;
 
 	@Parameter(defaultValue = "${project}", property = "project", required = true, readonly = true)
 	private MavenProject project;
@@ -112,6 +117,7 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 		if (TRANSFORMER_TYPE.isAssignableFrom(transformerClassInstance)) {
 			transformerInstance = TRANSFORMER_TYPE
 					.cast(transformerClassInstance.newInstance());
+			transformerInstance.setBuildContext(buildContext);
 			transformerInstance.configure(transformerClass.getProperties());
 			transformerInstance.setDefaultOutputDirectory(project.getBuild()
 					.getOutputDirectory());

@@ -1,5 +1,7 @@
 package nl.topicus.plugins.maven.javassist;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
@@ -10,13 +12,24 @@ import javassist.CtClass;
 import javassist.LoaderClassPath;
 import javassist.NotFoundException;
 
+import org.sonatype.plexus.build.incremental.BuildContext;
+
 public abstract class ClassTransformer {
+	private BuildContext buildContext;
 
 	private String defaultOutputDirectory;
 
 	private String filterPackageName;
 
 	private ILogger logger;
+
+	public BuildContext getBuildContext() {
+		return buildContext;
+	}
+
+	public void setBuildContext(BuildContext buildContext) {
+		this.buildContext = buildContext;
+	}
 
 	public String getDefaultOutputDirectory() {
 		return defaultOutputDirectory;
@@ -56,9 +69,9 @@ public abstract class ClassTransformer {
 	private Iterator<String> createClassNameIterator(final String classPath)
 			throws Exception {
 		if (new File(classPath).isDirectory()) {
-			return new ClassNameDirectoryIterator(classPath);
+			return new ClassNameDirectoryIterator(classPath, buildContext);
 		} else {
-			return new ClassNameJarIterator(classPath);
+			return new ClassNameJarIterator(classPath, buildContext);
 		}
 	}
 
@@ -69,9 +82,25 @@ public abstract class ClassTransformer {
 		this.filterPackageName = properties.getProperty("filterPackageName");
 	}
 
-	protected void writeFile(CtClass candidateClass, String classPath)
+	protected void writeFile(CtClass candidateClass, String targetDirectory)
 			throws Exception {
-		candidateClass.writeFile(classPath);
+		String classname = candidateClass.getName();
+		String filename = targetDirectory + File.separatorChar
+				+ classname.replace('.', File.separatorChar) + ".class";
+		int pos = filename.lastIndexOf(File.separatorChar);
+		if (pos > 0) {
+			String dir = filename.substring(0, pos);
+			if (!dir.equals(".")) {
+				File outputDir = new File(dir);
+				outputDir.mkdirs();
+				buildContext.refresh(outputDir);
+			}
+		}
+		try (DataOutputStream out = new DataOutputStream(
+				new BufferedOutputStream(
+						buildContext.newFileOutputStream(new File(filename))))) {
+			candidateClass.toBytecode(out);
+		}
 	}
 
 	public final void transform(final List<String> classPaths) {
@@ -87,6 +116,7 @@ public abstract class ClassTransformer {
 			final Iterator<String> classPathIterator = classPaths.iterator();
 			while (classPathIterator.hasNext()) {
 				final String classPath = classPathIterator.next();
+				getLogger().debug("Processing " + classPath);
 				final Iterator<String> classNames = createClassNameIterator(classPath);
 				while (classNames.hasNext()) {
 					final String className = classNames.next();

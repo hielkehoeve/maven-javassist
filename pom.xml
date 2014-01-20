@@ -26,7 +26,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<javassist.version>3.18.0-GA</javassist.version>
+		<javassist.version>3.18.1-GA</javassist.version>
 		<slf4j.version>1.7.5</slf4j.version>
 
 		<maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
