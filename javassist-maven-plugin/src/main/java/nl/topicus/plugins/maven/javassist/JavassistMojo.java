@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	private static final Class<ClassTransformer> TRANSFORMER_TYPE = ClassTransformer.class;
-	
+
 	@Component
 	private BuildContext buildContext;
 
@@ -61,8 +61,9 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	private List<String> getRuntimeClasspathElements()
 			throws DependencyResolutionRequiredException {
-		return Lists.newArrayList(Iterables.filter(
-				project.getRuntimeClasspathElements(), String.class));
+		List<?> ret = project.getCompileClasspathElements();
+		ret.remove(project.getBuild().getOutputDirectory());
+		return Lists.newArrayList(Iterables.filter(ret, String.class));
 	}
 
 	private List<URL> generateClassPathUrls(Iterable<String> classpathElements) {
