@@ -13,7 +13,7 @@ import javassist.NotFoundException;
 public abstract class ClassTransformer {
 
 	private String defaultOutputDirectory;
-	
+
 	private String filterPackageName;
 
 	private ILogger logger;
@@ -33,22 +33,23 @@ public abstract class ClassTransformer {
 	public void setLogger(ILogger logger) {
 		this.logger = logger;
 	}
-	
+
 	public String getFilterPackageName() {
 		return filterPackageName;
 	}
 
-	protected abstract void applyTransformations(ClassPool classPool, CtClass classToTransform)
-			throws Exception;
+	protected abstract void applyTransformations(ClassPool classPool,
+			CtClass classToTransform) throws Exception;
 
-	protected boolean filterCtClass(final CtClass candidateClass) throws Exception {
+	protected boolean filterCtClass(final CtClass candidateClass)
+			throws Exception {
 		return true;
 	}
-	
+
 	protected boolean filterClassName(String className) {
-		if(filterPackageName != null && filterPackageName.length()>0)
+		if (filterPackageName != null && filterPackageName.length() > 0)
 			return className.startsWith(filterPackageName);
-		
+
 		return false;
 	}
 
@@ -62,9 +63,9 @@ public abstract class ClassTransformer {
 	}
 
 	protected void configure(final Properties properties) throws Exception {
-		if(properties == null)
+		if (properties == null)
 			return;
-		
+
 		this.filterPackageName = properties.getProperty("filterPackageName");
 	}
 
@@ -89,9 +90,9 @@ public abstract class ClassTransformer {
 				final Iterator<String> classNames = createClassNameIterator(classPath);
 				while (classNames.hasNext()) {
 					final String className = classNames.next();
-					if(!filterClassName(className))
+					if (!filterClassName(className))
 						continue;
-					
+
 					try {
 						classPool.importPackage(className);
 						final CtClass candidateClass = classPool.get(className);
@@ -101,10 +102,10 @@ public abstract class ClassTransformer {
 						}
 					} catch (final NotFoundException e) {
 						getLogger()
-								.warn(String
-										.format("Class %s could not not be resolved due to dependencies not found on "
+								.warn(String.format(
+										"Class %s could not not be resolved due to dependencies not found on "
 												+ "current classpath (usually your class depends on \"provided\" scoped dependencies).",
-												className), e);
+										className), e);
 						continue;
 					} catch (final Exception ex) {
 						getLogger()

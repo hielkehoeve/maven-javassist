@@ -7,7 +7,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 public class ClassTransformerConfiguration {
 	@Parameter(property = "className", required = true)
 	private String className;
-	
+
 	@Parameter(property = "properties", required = false)
 	private Properties properties;
 

@@ -13,9 +13,10 @@ public class ClassNameDirectoryIterator implements Iterator<String> {
 	final String classPath;
 	Iterator<File> classFiles = new ArrayList<File>().iterator();
 
-	public ClassNameDirectoryIterator( final String classPath) {
+	public ClassNameDirectoryIterator(final String classPath) {
 		this.classPath = classPath;
-		this.classFiles = FileUtils.iterateFiles(new File(classPath), new String[]{ "class" }, true);
+		this.classFiles = FileUtils.iterateFiles(new File(classPath),
+				new String[] { "class" }, true);
 	}
 
 	@Override
@@ -27,8 +28,10 @@ public class ClassNameDirectoryIterator implements Iterator<String> {
 	public String next() {
 		final File classFile = classFiles.next();
 		try {
-			final String qualifiedFileName = classFile.getCanonicalPath().substring(classPath.length() + 1);
-			return removeExtension(qualifiedFileName.replace(File.separator, "."));
+			final String qualifiedFileName = classFile.getCanonicalPath()
+					.substring(classPath.length() + 1);
+			return removeExtension(qualifiedFileName.replace(File.separator,
+					"."));
 		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage());
 		}

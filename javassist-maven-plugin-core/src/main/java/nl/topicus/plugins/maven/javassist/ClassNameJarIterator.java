@@ -17,12 +17,13 @@ public class ClassNameJarIterator implements Iterator<String> {
 
 		List<String> classNames = new ArrayList<>();
 		try {
-			JarInputStream jarFile = new JarInputStream(new FileInputStream(classPath));
+			JarInputStream jarFile = new JarInputStream(new FileInputStream(
+					classPath));
 			JarEntry jarEntry;
 
 			while (true) {
 				jarEntry = jarFile.getNextJarEntry();
-				if (jarEntry == null) 
+				if (jarEntry == null)
 					break;
 
 				if (jarEntry.getName().endsWith(".class"))

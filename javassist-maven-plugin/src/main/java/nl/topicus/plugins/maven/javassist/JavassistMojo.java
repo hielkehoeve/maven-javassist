@@ -32,79 +32,96 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	@Parameter(property = "transformerClasses", required = true)
 	private ClassTransformerConfiguration[] transformerClasses;
-	
+
 	public void execute() throws MojoExecutionException {
-		final ClassLoader originalContextClassLoader = currentThread().getContextClassLoader();
+		final ClassLoader originalContextClassLoader = currentThread()
+				.getContextClassLoader();
 		try {
 			final List<String> classpathElements = getRuntimeClasspathElements();
-			loadClassPath(originalContextClassLoader, generateClassPathUrls(classpathElements));
+			loadClassPath(originalContextClassLoader,
+					generateClassPathUrls(classpathElements));
 			final List<ClassTransformer> transformers = instantiateTransformerClasses();
 
-			for(ClassTransformer transformer : transformers) {
+			for (ClassTransformer transformer : transformers) {
 				transformer.transform(classpathElements);
 			}
-				
+
 		} catch (final Exception e) {
 			getLog().error(e.getMessage(), e);
 			throw new MojoExecutionException(e.getMessage(), e);
-		}
-		finally
-		{
+		} finally {
 			currentThread().setContextClassLoader(originalContextClassLoader);
 		}
 	}
 
-	private List<String> getRuntimeClasspathElements() throws DependencyResolutionRequiredException {
-		return Lists.newArrayList(Iterables.filter(project.getRuntimeClasspathElements(), String.class));
+	private List<String> getRuntimeClasspathElements()
+			throws DependencyResolutionRequiredException {
+		return Lists.newArrayList(Iterables.filter(
+				project.getRuntimeClasspathElements(), String.class));
 	}
 
 	private List<URL> generateClassPathUrls(Iterable<String> classpathElements) {
 		final List<URL> classPath = new ArrayList<URL>();
 		for (final String runtimeResource : classpathElements) {
 			URL url = resolveUrl(runtimeResource);
-			if(url!=null) {
+			if (url != null) {
 				classPath.add(url);
 			}
 		}
-		
+
 		return classPath;
 	}
-	
-	private void loadClassPath(final ClassLoader contextClassLoader, final List<URL> urls) {
-		if(urls.size() <= 0)
+
+	private void loadClassPath(final ClassLoader contextClassLoader,
+			final List<URL> urls) {
+		if (urls.size() <= 0)
 			return;
-		
-		final URLClassLoader pluginClassLoader = URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]), contextClassLoader);
+
+		final URLClassLoader pluginClassLoader = URLClassLoader.newInstance(
+				urls.toArray(new URL[urls.size()]), contextClassLoader);
 		currentThread().setContextClassLoader(pluginClassLoader);
 	}
 
-	protected List<ClassTransformer> instantiateTransformerClasses() throws Exception {
+	protected List<ClassTransformer> instantiateTransformerClasses()
+			throws Exception {
 		if (transformerClasses == null || transformerClasses.length <= 0)
-			throw new MojoExecutionException("Invalid transformer classes passed");
-		
+			throw new MojoExecutionException(
+					"Invalid transformer classes passed");
+
 		final List<ClassTransformer> transformerInstances = new LinkedList<ClassTransformer>();
 		for (ClassTransformerConfiguration transformerClass : transformerClasses) {
-			transformerInstances.add(instantiateTransformerClass(transformerClass));
+			transformerInstances
+					.add(instantiateTransformerClass(transformerClass));
 		}
 		return transformerInstances;
 	}
 
-	protected ClassTransformer instantiateTransformerClass(final ClassTransformerConfiguration transformerClass) throws Exception {
-		if (transformerClass == null || transformerClass.getClassName().trim().isEmpty()) 
-			throw new MojoExecutionException("Invalid transformer class name passed");
-		
-		Class<?> transformerClassInstance = Class.forName(transformerClass.getClassName().trim(), true, currentThread().getContextClassLoader());
+	protected ClassTransformer instantiateTransformerClass(
+			final ClassTransformerConfiguration transformerClass)
+			throws Exception {
+		if (transformerClass == null
+				|| transformerClass.getClassName().trim().isEmpty())
+			throw new MojoExecutionException(
+					"Invalid transformer class name passed");
+
+		Class<?> transformerClassInstance = Class.forName(transformerClass
+				.getClassName().trim(), true, currentThread()
+				.getContextClassLoader());
 		ClassTransformer transformerInstance = null;
-		
+
 		if (TRANSFORMER_TYPE.isAssignableFrom(transformerClassInstance)) {
-			transformerInstance = TRANSFORMER_TYPE.cast(transformerClassInstance.newInstance());
+			transformerInstance = TRANSFORMER_TYPE
+					.cast(transformerClassInstance.newInstance());
 			transformerInstance.configure(transformerClass.getProperties());
-			transformerInstance.setDefaultOutputDirectory(project.getBuild().getOutputDirectory());
+			transformerInstance.setDefaultOutputDirectory(project.getBuild()
+					.getOutputDirectory());
 			transformerInstance.setLogger(this);
 		} else {
-			throw new MojoExecutionException("Transformer class must inherit from "+ TRANSFORMER_TYPE.getName());
+			throw new MojoExecutionException(
+					"Transformer class must inherit from "
+							+ TRANSFORMER_TYPE.getName());
 		}
-		
+
 		return transformerInstance;
 	}
 
@@ -128,31 +145,31 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	@Override
 	public void info(String message) {
-		getLog().info(message);		
+		getLog().info(message);
 	}
 
 	@Override
 	public void info(String message, Throwable throwable) {
-		getLog().info(message, throwable);		
+		getLog().info(message, throwable);
 	}
 
 	@Override
 	public void warn(String message) {
-		getLog().warn(message);		
+		getLog().warn(message);
 	}
 
 	@Override
 	public void warn(String message, Throwable throwable) {
-		getLog().warn(message, throwable);		
+		getLog().warn(message, throwable);
 	}
 
 	@Override
 	public void error(String message) {
-		getLog().error(message);		
+		getLog().error(message);
 	}
 
 	@Override
 	public void error(String message, Throwable throwable) {
-		getLog().error(message, throwable);		
+		getLog().error(message, throwable);
 	}
 }
