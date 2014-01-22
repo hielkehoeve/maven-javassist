@@ -50,7 +50,9 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 			for (ClassTransformer transformer : transformers) {
 				transformer.transform(classpathElements);
 			}
-
+		} catch (TransformationException e) {
+			getLog().error(e.getMessage());
+			throw new MojoExecutionException(e.getMessage());
 		} catch (final Exception e) {
 			getLog().error(e.getMessage(), e);
 			throw new MojoExecutionException(e.getMessage(), e);

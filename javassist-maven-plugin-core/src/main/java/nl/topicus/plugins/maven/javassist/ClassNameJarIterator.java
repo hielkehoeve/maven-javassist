@@ -13,21 +13,23 @@ import java.util.jar.JarInputStream;
 
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-public class ClassNameJarIterator implements Iterator<String> {
+public class ClassNameJarIterator implements ClassFileIterator {
 	private Iterator<String> classFiles = new ArrayList<String>().iterator();
+	private File jarFile;
 
 	public ClassNameJarIterator(final String classPath,
 			final BuildContext buildContext) {
 
+		jarFile = new File(classPath);
 		if (buildContext.hasDelta(classPath)) {
 			List<String> classNames = new ArrayList<>();
 			try {
-				JarInputStream jarFile = new JarInputStream(
-						new FileInputStream(classPath));
+				JarInputStream jarFileStream = new JarInputStream(
+						new FileInputStream(jarFile));
 				JarEntry jarEntry;
 
 				while (true) {
-					jarEntry = jarFile.getNextJarEntry();
+					jarEntry = jarFileStream.getNextJarEntry();
 					if (jarEntry == null)
 						break;
 
@@ -37,7 +39,7 @@ public class ClassNameJarIterator implements Iterator<String> {
 
 				}
 
-				jarFile.close();
+				jarFileStream.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -55,6 +57,11 @@ public class ClassNameJarIterator implements Iterator<String> {
 	@Override
 	public String next() {
 		return removeExtension(classFiles.next().replace(File.separator, "."));
+	}
+
+	@Override
+	public File getLastFile() {
+		return jarFile;
 	}
 
 	@Override
