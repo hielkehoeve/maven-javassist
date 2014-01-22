@@ -5,37 +5,48 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-public class ClassNameJarIterator implements Iterator<String> {
+import org.sonatype.plexus.build.incremental.BuildContext;
+
+public class ClassNameJarIterator implements ClassFileIterator {
 	private Iterator<String> classFiles = new ArrayList<String>().iterator();
+	private File jarFile;
 
-	public ClassNameJarIterator(final String classPath) {
+	public ClassNameJarIterator(final String classPath,
+			final BuildContext buildContext) {
 
-		List<String> classNames = new ArrayList<>();
-		try {
-			JarInputStream jarFile = new JarInputStream(new FileInputStream(classPath));
-			JarEntry jarEntry;
+		jarFile = new File(classPath);
+		if (buildContext.hasDelta(classPath)) {
+			List<String> classNames = new ArrayList<>();
+			try {
+				JarInputStream jarFileStream = new JarInputStream(
+						new FileInputStream(jarFile));
+				JarEntry jarEntry;
 
-			while (true) {
-				jarEntry = jarFile.getNextJarEntry();
-				if (jarEntry == null) 
-					break;
+				while (true) {
+					jarEntry = jarFileStream.getNextJarEntry();
+					if (jarEntry == null)
+						break;
 
-				if (jarEntry.getName().endsWith(".class"))
-					classNames.add(jarEntry.getName().replaceAll("/", "\\."));
+					if (jarEntry.getName().endsWith(".class"))
+						classNames.add(jarEntry.getName()
+								.replaceAll("/", "\\."));
 
+				}
+
+				jarFileStream.close();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-
-			jarFile.close();
-		} catch (Exception e) {
-			e.printStackTrace();
+			classFiles = classNames.iterator();
+		} else {
+			classFiles = Collections.emptyIterator();
 		}
-
-		classFiles = classNames.iterator();
 	}
 
 	@Override
@@ -46,6 +57,11 @@ public class ClassNameJarIterator implements Iterator<String> {
 	@Override
 	public String next() {
 		return removeExtension(classFiles.next().replace(File.separator, "."));
+	}
+
+	@Override
+	public File getLastFile() {
+		return jarFile;
 	}
 
 	@Override

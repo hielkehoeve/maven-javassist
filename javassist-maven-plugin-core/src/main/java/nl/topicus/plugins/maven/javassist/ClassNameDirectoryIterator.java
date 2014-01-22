@@ -8,14 +8,28 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
+import org.sonatype.plexus.build.incremental.BuildContext;
 
-public class ClassNameDirectoryIterator implements Iterator<String> {
-	final String classPath;
-	Iterator<File> classFiles = new ArrayList<File>().iterator();
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 
-	public ClassNameDirectoryIterator( final String classPath) {
+public class ClassNameDirectoryIterator implements ClassFileIterator {
+	private final String classPath;
+	private Iterator<File> classFiles = new ArrayList<File>().iterator();
+	private File lastFile;
+
+	public ClassNameDirectoryIterator(final String classPath,
+			final BuildContext buildContext) {
 		this.classPath = classPath;
-		this.classFiles = FileUtils.iterateFiles(new File(classPath), new String[]{ "class" }, true);
+		this.classFiles = FluentIterable
+				.from(FileUtils.listFiles(new File(classPath),
+						new String[] { "class" }, true))
+				.filter(new Predicate<File>() {
+					@Override
+					public boolean apply(File input) {
+						return buildContext.hasDelta(input);
+					}
+				}).iterator();
 	}
 
 	@Override
@@ -26,12 +40,20 @@ public class ClassNameDirectoryIterator implements Iterator<String> {
 	@Override
 	public String next() {
 		final File classFile = classFiles.next();
+		lastFile = classFile;
 		try {
-			final String qualifiedFileName = classFile.getCanonicalPath().substring(classPath.length() + 1);
-			return removeExtension(qualifiedFileName.replace(File.separator, "."));
+			final String qualifiedFileName = classFile.getCanonicalPath()
+					.substring(classPath.length() + 1);
+			return removeExtension(qualifiedFileName.replace(File.separator,
+					"."));
 		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage());
 		}
+	}
+
+	@Override
+	public File getLastFile() {
+		return lastFile;
 	}
 
 	@Override

@@ -19,7 +19,7 @@ public interface ILogger {
 	 *            the exception (throwable) to log
 	 */
 	public void debug(String message, Throwable throwable);
-	
+
 	/**
 	 * Log a message at the INFO level.
 	 * 
@@ -37,7 +37,7 @@ public interface ILogger {
 	 *            the exception (throwable) to log
 	 */
 	public void info(String message, Throwable throwable);
-	
+
 	/**
 	 * Log a message at the WARN level.
 	 * 
@@ -55,7 +55,7 @@ public interface ILogger {
 	 *            the exception (throwable) to log
 	 */
 	public void warn(String message, Throwable throwable);
-	
+
 	/**
 	 * Log a message at the ERROR level.
 	 * 

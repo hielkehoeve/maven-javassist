@@ -7,7 +7,7 @@ import com.google.common.base.Predicate;
 public class IsDirectoryPredicate implements Predicate<String> {
 
 	public static final IsDirectoryPredicate INSTANCE = new IsDirectoryPredicate();
-	
+
 	@Override
 	public boolean apply(String resource) {
 		try {
