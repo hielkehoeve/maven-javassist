@@ -1,10 +1,15 @@
 package nl.topicus.plugins.maven.javassist;
 
+import java.io.File;
+
 public interface ILogger {
+
+	public void addMessage(File file, int line, int pos, String message,
+			Throwable e);
 
 	/**
 	 * Log a message at the DEBUG level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 */
@@ -12,7 +17,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the DEBUG level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 * @param throwable
@@ -22,7 +27,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the INFO level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 */
@@ -30,7 +35,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the INFO level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 * @param throwable
@@ -40,7 +45,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the WARN level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 */
@@ -48,7 +53,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the WARN level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 * @param throwable
@@ -58,7 +63,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the ERROR level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 */
@@ -66,7 +71,7 @@ public interface ILogger {
 
 	/**
 	 * Log a message at the ERROR level.
-	 * 
+	 *
 	 * @param message
 	 *            the message string to be logged
 	 * @param throwable

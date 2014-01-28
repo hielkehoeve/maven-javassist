@@ -1,17 +1,14 @@
 package nl.topicus.plugins.maven.javassist;
 
-import static org.apache.commons.io.FilenameUtils.removeExtension;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.apache.commons.io.FileUtils;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
+import com.google.common.io.Files;
 
 public class ClassNameDirectoryIterator implements ClassFileIterator {
 	private final String classPath;
@@ -21,13 +18,13 @@ public class ClassNameDirectoryIterator implements ClassFileIterator {
 	public ClassNameDirectoryIterator(final String classPath,
 			final BuildContext buildContext) {
 		this.classPath = classPath;
-		this.classFiles = FluentIterable
-				.from(FileUtils.listFiles(new File(classPath),
-						new String[] { "class" }, true))
+		this.classFiles = Files.fileTreeTraverser()
+				.preOrderTraversal(new File(classPath))
 				.filter(new Predicate<File>() {
 					@Override
 					public boolean apply(File input) {
-						return buildContext.hasDelta(input);
+						return "class".equals(Files.getFileExtension(input
+								.getName())) && buildContext.hasDelta(input);
 					}
 				}).iterator();
 	}
@@ -44,8 +41,8 @@ public class ClassNameDirectoryIterator implements ClassFileIterator {
 		try {
 			final String qualifiedFileName = classFile.getCanonicalPath()
 					.substring(classPath.length() + 1);
-			return removeExtension(qualifiedFileName.replace(File.separator,
-					"."));
+			return Files.getNameWithoutExtension(qualifiedFileName.replace(
+					File.separator, "."));
 		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage());
 		}

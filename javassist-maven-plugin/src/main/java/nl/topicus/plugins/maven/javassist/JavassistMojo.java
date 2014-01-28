@@ -2,13 +2,20 @@ package nl.topicus.plugins.maven.javassist;
 
 import static java.lang.Thread.currentThread;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
+
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.LoaderClassPath;
+import javassist.NotFoundException;
 
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
@@ -35,37 +42,155 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 	@Parameter(defaultValue = "${project}", property = "project", required = true, readonly = true)
 	private MavenProject project;
 
-	@Parameter(property = "transformerClasses", required = true)
-	private ClassTransformerConfiguration[] transformerClasses;
+	@Parameter(property = "transformerClass", required = true)
+	private String transformerClass;
+
+	@Parameter(property = "packageName", required = true)
+	private String packageName;
+
+	@Parameter(property = "outputDirectory", required = true, defaultValue = "${project.build.outputDirectory}")
+	private String outputDirectory;
 
 	public void execute() throws MojoExecutionException {
 		final ClassLoader originalContextClassLoader = currentThread()
 				.getContextClassLoader();
 		try {
-			final List<String> classpathElements = getRuntimeClasspathElements();
+			final List<String> classpathElements = getCompileClasspathElements();
 			loadClassPath(originalContextClassLoader,
 					generateClassPathUrls(classpathElements));
-			final List<ClassTransformer> transformers = instantiateTransformerClasses();
-
-			for (ClassTransformer transformer : transformers) {
-				transformer.transform(classpathElements);
-			}
-		} catch (TransformationException e) {
-			getLog().error(e.getMessage());
-			throw new MojoExecutionException(e.getMessage());
-		} catch (final Exception e) {
-			getLog().error(e.getMessage(), e);
+			transform(classpathElements);
+		} catch (DependencyResolutionRequiredException e) {
 			throw new MojoExecutionException(e.getMessage(), e);
 		} finally {
 			currentThread().setContextClassLoader(originalContextClassLoader);
 		}
 	}
 
-	private List<String> getRuntimeClasspathElements()
+	public final void transform(final List<String> classPaths)
+			throws MojoExecutionException {
+		int errors = 0;
+		if (classPaths.isEmpty())
+			return;
+
+		ClassTransformer transformer = instantiateTransformerClass();
+		final ClassPool classPool = new ClassPool(ClassPool.getDefault());
+		classPool.appendClassPath(new LoaderClassPath(Thread.currentThread()
+				.getContextClassLoader()));
+
+		final Iterator<String> classPathIterator = classPaths.iterator();
+		while (classPathIterator.hasNext()) {
+			final String classPath = classPathIterator.next();
+			getLog().debug("Processing " + classPath);
+			final ClassFileIterator classNames = createClassNameIterator(classPath);
+			while (classNames.hasNext()) {
+				final String className = classNames.next();
+				if (!transformer.filterClassName(className)) {
+					getLog().debug("Skipping " + className);
+					continue;
+				}
+
+				try {
+					final CtClass candidateClass = classPool.get(className);
+					if (transformer.filterCtClass(candidateClass)) {
+						transformer.applyTransformations(classPool,
+								candidateClass);
+						writeFile(candidateClass, outputDirectory);
+					}
+				} catch (final TransformationException e) {
+					errors++;
+					addMessage(classNames.getLastFile(), 1, 1, e.getMessage(),
+							null);
+					continue;
+				} catch (final NotFoundException e) {
+					errors++;
+					addMessage(classNames.getLastFile(), 1, 1, String.format(
+							"Class %s could not be resolved due "
+									+ "to dependencies not found on current "
+									+ "classpath.", className), e);
+					continue;
+				} catch (final Exception e) {
+					errors++;
+					addMessage(classNames.getLastFile(), 1, 1, String.format(
+							"Class %s could not be transformed.", className), e);
+					continue;
+				}
+			}
+		}
+		if (errors > 0)
+			throw new MojoExecutionException(errors
+					+ " errors found during transformation.");
+	}
+
+	public void writeFile(CtClass candidateClass, String targetDirectory)
+			throws Exception {
+		candidateClass.getClassFile().compact();
+		candidateClass.rebuildClassFile();
+
+		String classname = candidateClass.getName();
+		String filename = targetDirectory + File.separatorChar
+				+ classname.replace('.', File.separatorChar) + ".class";
+		int pos = filename.lastIndexOf(File.separatorChar);
+		if (pos > 0) {
+			String dir = filename.substring(0, pos);
+			if (!dir.equals(".")) {
+				File outputDir = new File(dir);
+				outputDir.mkdirs();
+				buildContext.refresh(outputDir);
+			}
+		}
+		try (DataOutputStream out = new DataOutputStream(
+				new BufferedOutputStream(
+						buildContext.newFileOutputStream(new File(filename))))) {
+			candidateClass.toBytecode(out);
+		}
+	}
+
+	private ClassFileIterator createClassNameIterator(final String classPath) {
+		if (new File(classPath).isDirectory()) {
+			return new ClassNameDirectoryIterator(classPath, buildContext);
+		} else {
+			return new ClassNameJarIterator(classPath, buildContext);
+		}
+	}
+
+	private List<String> getCompileClasspathElements()
 			throws DependencyResolutionRequiredException {
 		List<?> ret = project.getCompileClasspathElements();
 		ret.remove(project.getBuild().getOutputDirectory());
 		return Lists.newArrayList(Iterables.filter(ret, String.class));
+	}
+
+	protected ClassTransformer instantiateTransformerClass()
+			throws MojoExecutionException {
+		if (transformerClass == null || transformerClass.trim().isEmpty())
+			throw new MojoExecutionException(
+					"Invalid transformer class name passed");
+
+		Class<?> transformerClassInstance;
+		try {
+			transformerClassInstance = Class.forName(transformerClass.trim(),
+					true, currentThread().getContextClassLoader());
+		} catch (ClassNotFoundException e) {
+			throw new MojoExecutionException(e.getMessage(), e);
+		}
+		ClassTransformer transformerInstance = null;
+
+		if (TRANSFORMER_TYPE.isAssignableFrom(transformerClassInstance)) {
+			try {
+				transformerInstance = TRANSFORMER_TYPE
+						.cast(transformerClassInstance.newInstance());
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new MojoExecutionException(e.getMessage(), e);
+			}
+			transformerInstance.setLogger(this);
+			transformerInstance.setFilterPackageName(packageName);
+		} else {
+			throw new MojoExecutionException(
+					"Transformer class must inherit from "
+							+ TRANSFORMER_TYPE.getName());
+		}
+
+		return transformerInstance;
 	}
 
 	private List<URL> generateClassPathUrls(Iterable<String> classpathElements) {
@@ -90,56 +215,19 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 		currentThread().setContextClassLoader(pluginClassLoader);
 	}
 
-	protected List<ClassTransformer> instantiateTransformerClasses()
-			throws Exception {
-		if (transformerClasses == null || transformerClasses.length <= 0)
-			throw new MojoExecutionException(
-					"Invalid transformer classes passed");
-
-		final List<ClassTransformer> transformerInstances = new LinkedList<ClassTransformer>();
-		for (ClassTransformerConfiguration transformerClass : transformerClasses) {
-			transformerInstances
-					.add(instantiateTransformerClass(transformerClass));
-		}
-		return transformerInstances;
-	}
-
-	protected ClassTransformer instantiateTransformerClass(
-			final ClassTransformerConfiguration transformerClass)
-			throws Exception {
-		if (transformerClass == null
-				|| transformerClass.getClassName().trim().isEmpty())
-			throw new MojoExecutionException(
-					"Invalid transformer class name passed");
-
-		Class<?> transformerClassInstance = Class.forName(transformerClass
-				.getClassName().trim(), true, currentThread()
-				.getContextClassLoader());
-		ClassTransformer transformerInstance = null;
-
-		if (TRANSFORMER_TYPE.isAssignableFrom(transformerClassInstance)) {
-			transformerInstance = TRANSFORMER_TYPE
-					.cast(transformerClassInstance.newInstance());
-			transformerInstance.setBuildContext(buildContext);
-			transformerInstance.configure(transformerClass.getProperties());
-			transformerInstance.setDefaultOutputDirectory(project.getBuild()
-					.getOutputDirectory());
-			transformerInstance.setLogger(this);
-		} else {
-			throw new MojoExecutionException(
-					"Transformer class must inherit from "
-							+ TRANSFORMER_TYPE.getName());
-		}
-
-		return transformerInstance;
-	}
-
 	private URL resolveUrl(final String resource) {
 		try {
 			return new File(resource).toURI().toURL();
 		} catch (final MalformedURLException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
+	}
+
+	@Override
+	public void addMessage(File file, int line, int pos, String message,
+			Throwable e) {
+		buildContext.addMessage(file, line, pos, message,
+				BuildContext.SEVERITY_ERROR, e);
 	}
 
 	@Override

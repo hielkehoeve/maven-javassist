@@ -1,7 +1,5 @@
 package nl.topicus.plugins.maven.javassist;
 
-import static org.apache.commons.io.FilenameUtils.removeExtension;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -12,6 +10,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 import org.sonatype.plexus.build.incremental.BuildContext;
+
+import com.google.common.io.Files;
 
 public class ClassNameJarIterator implements ClassFileIterator {
 	private Iterator<String> classFiles = new ArrayList<String>().iterator();
@@ -56,7 +56,8 @@ public class ClassNameJarIterator implements ClassFileIterator {
 
 	@Override
 	public String next() {
-		return removeExtension(classFiles.next().replace(File.separator, "."));
+		return Files.getNameWithoutExtension(classFiles.next()).replace(
+				File.separator, ".");
 	}
 
 	@Override
