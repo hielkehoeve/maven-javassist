@@ -79,7 +79,8 @@ public class TransformContext {
 		if (transformer.filterClassName(className)) {
 			try {
 				CtClass classToTransform = classPool.get(className);
-				if (transformer.filterCtClass(classToTransform)) {
+				if (!classToTransform.isFrozen()
+						&& transformer.filterCtClass(classToTransform)) {
 					transformer.applyTransformations(classPool,
 							classToTransform);
 					classToTransform.getClassFile().compact();
