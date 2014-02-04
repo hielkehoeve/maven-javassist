@@ -1,7 +1,7 @@
 javassist-maven-plugin
 ======================
 
-A javassist maven plugin designed to alter class files after compilation. By creating your own ClassTransformer you can remove/add/edit code from/to/in your classes and write them back or to a different location.
+A javassist maven plugin designed to alter class files after compilation. By creating your own ClassTransformer you can remove/add/edit code from/to/in your classes.
 
 Extend ClassTransformer
 ======================
@@ -15,11 +15,6 @@ override this if you wish to filter some specific classes.
 protected void applyTransformations(CtClass classToTransform) throws Exception
 ```
 is where you do the actual work. Some operations are quite tricky in javassist.
-
-```
-protected void writeFile(CtClass candidateClass, String classPath) throws Exception
-```
-override this if you wish to save your class file at a different location.
 
 Add the following to your pom.xml
 ======================
@@ -46,17 +41,8 @@ Add the following to your pom.xml
 				<artifactId>javassist-maven-plugin</artifactId>
 				<version>1.0-SNAPSHOT</version>
 				<configuration>
-					<transformerClasses>
-						<transformerClass>
-							<className>com.example.HelloWorldTransformer</className>
-							<properties>
-								<property>
-									<name>filterPackageName</name>
-									<value>com.example.entities</value>
-								</property>
-							</properties>
-						</transformerClass>
-					</transformerClasses>
+					<transformerClass>com.example.HelloWorldTransformer</transformerClass>
+					<packageName>com.example.entities</packageName>
 				</configuration>
 				<executions>
 					<execution>
