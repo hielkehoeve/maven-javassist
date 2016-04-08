@@ -47,10 +47,10 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	@Parameter(property = "processInclusions", required = true)
 	private List<String> processInclusions;
-	
+
 	@Parameter(property = "processExclusions")
 	private List<String> processExclusions;
-	
+
 	@Parameter(property = "exclusions")
 	private List<String> exclusions;
 
@@ -90,16 +90,16 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 			final ClassFileIterator classNames = createClassNameIterator(classPath);
 			while (classNames.hasNext()) {
 				final String className = classNames.next();
-				if (!transformer.processClassName(className)) {
-					debug("Skipping " + className);
-					continue;
-				}
-
 				try {
 					final CtClass candidateClass = classPool.get(className);
-						transformer.applyTransformations(classPool,
-								candidateClass);
-						writeFile(candidateClass, outputDirectory);
+					if (candidateClass.isFrozen()
+							|| !transformer.processClassName(className)) {
+						debug("Skipping " + className);
+						continue;
+					}
+
+					transformer.applyTransformations(classPool, candidateClass);
+					writeFile(candidateClass, outputDirectory);
 				} catch (final TransformationException e) {
 					errors++;
 					addMessage(classNames.getLastFile(), 1, 1, e.getMessage(),
