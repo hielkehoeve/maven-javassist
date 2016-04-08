@@ -29,12 +29,10 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>16.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.sonatype.plexus</groupId>
 			<artifactId>plexus-build-api</artifactId>
-			<version>0.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>nl.topicus.plugins</groupId>

@@ -39,16 +39,22 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 	@Component
 	private BuildContext buildContext;
 
-	@Parameter(defaultValue = "${project}", property = "project", required = true, readonly = true)
+	@Parameter(property = "project", defaultValue = "${project}")
 	private MavenProject project;
 
 	@Parameter(property = "transformerClass", required = true)
 	private String transformerClass;
 
-	@Parameter(property = "packageName", required = true)
-	private String packageName;
+	@Parameter(property = "processInclusions", required = true)
+	private List<String> processInclusions;
+	
+	@Parameter(property = "processExclusions")
+	private List<String> processExclusions;
+	
+	@Parameter(property = "exclusions")
+	private List<String> exclusions;
 
-	@Parameter(property = "outputDirectory", required = true, defaultValue = "${project.build.outputDirectory}")
+	@Parameter(property = "outputDirectory", defaultValue = "${project.build.outputDirectory}")
 	private String outputDirectory;
 
 	public void execute() throws MojoExecutionException {
@@ -80,22 +86,20 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 		final Iterator<String> classPathIterator = classPaths.iterator();
 		while (classPathIterator.hasNext()) {
 			final String classPath = classPathIterator.next();
-			getLog().debug("Processing " + classPath);
+			debug("Processing " + classPath);
 			final ClassFileIterator classNames = createClassNameIterator(classPath);
 			while (classNames.hasNext()) {
 				final String className = classNames.next();
-				if (!transformer.filterClassName(className)) {
-					getLog().debug("Skipping " + className);
+				if (!transformer.processClassName(className)) {
+					debug("Skipping " + className);
 					continue;
 				}
 
 				try {
 					final CtClass candidateClass = classPool.get(className);
-					if (transformer.filterCtClass(candidateClass)) {
 						transformer.applyTransformations(classPool,
 								candidateClass);
 						writeFile(candidateClass, outputDirectory);
-					}
 				} catch (final TransformationException e) {
 					errors++;
 					addMessage(classNames.getLastFile(), 1, 1, e.getMessage(),
@@ -183,7 +187,9 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 				throw new MojoExecutionException(e.getMessage(), e);
 			}
 			transformerInstance.setLogger(this);
-			transformerInstance.setFilterPackageName(packageName);
+			transformerInstance.setProcessInclusions(processInclusions);
+			transformerInstance.setProcessExclusions(processExclusions);
+			transformerInstance.setExclusions(exclusions);
 		} else {
 			throw new MojoExecutionException(
 					"Transformer class must inherit from "
@@ -232,12 +238,12 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	@Override
 	public void debug(String message) {
-		getLog().debug(message);
+		getLog().info(message);
 	}
 
 	@Override
 	public void debug(String message, Throwable throwable) {
-		getLog().debug(message, throwable);
+		getLog().info(message, throwable);
 	}
 
 	@Override

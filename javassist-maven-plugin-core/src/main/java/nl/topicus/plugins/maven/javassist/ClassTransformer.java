@@ -1,10 +1,18 @@
 package nl.topicus.plugins.maven.javassist;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javassist.ClassPool;
 import javassist.CtClass;
 
 public abstract class ClassTransformer {
-	private String filterPackageName;
+
+	private List<String> processInclusions = new ArrayList<>();
+
+	private List<String> processExclusions = new ArrayList<>();
+
+	private List<String> exclusions = new ArrayList<>();
 
 	private ILogger logger;
 
@@ -16,24 +24,42 @@ public abstract class ClassTransformer {
 		this.logger = logger;
 	}
 
-	public final String getFilterPackageName() {
-		return filterPackageName;
+	public List<String> getProcessInclusions() {
+		return processInclusions;
 	}
 
-	public final void setFilterPackageName(String filterPackageName) {
-		this.filterPackageName = filterPackageName;
+	public void setProcessInclusions(List<String> processInclusions) {
+		this.processInclusions = processInclusions;
+	}
+
+	public List<String> getProcessExclusions() {
+		return processExclusions;
+	}
+
+	public void setProcessExclusions(List<String> processExclusions) {
+		this.processExclusions = processExclusions;
+	}
+
+	public List<String> getExclusions() {
+		return exclusions;
+	}
+
+	public void setExclusions(List<String> exclusions) {
+		this.exclusions = exclusions;
 	}
 
 	public abstract void applyTransformations(ClassPool classPool,
 			CtClass classToTransform) throws TransformationException;
 
-	public boolean filterCtClass(final CtClass candidateClass) {
-		return true;
-	}
+	public boolean processClassName(String className) {
+		
+		for (String exclusion : getProcessExclusions())
+			if (className.startsWith(exclusion))
+				return false;
 
-	public boolean filterClassName(String className) {
-		if (filterPackageName != null && filterPackageName.length() > 0)
-			return className.startsWith(filterPackageName);
+		for (String inclusion : getProcessInclusions())
+			if (className.startsWith(inclusion))
+				return true;
 
 		return false;
 	}
