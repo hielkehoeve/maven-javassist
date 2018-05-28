@@ -54,6 +54,9 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 	@Parameter(property = "exclusions")
 	private List<String> exclusions;
 
+	@Parameter(property = "forceDefrost")
+	private boolean forceDefrost;
+
 	@Parameter(property = "outputDirectory", defaultValue = "${project.build.outputDirectory}")
 	private String outputDirectory;
 
@@ -127,6 +130,11 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	public void writeFile(CtClass candidateClass, String targetDirectory)
 			throws Exception {
+		if (forceDefrost) {
+			error("FORCE DEFROSTING "+candidateClass.getName());
+			candidateClass.defrost();
+			candidateClass.defrost();
+		}
 		candidateClass.getClassFile().compact();
 		candidateClass.rebuildClassFile();
 
@@ -212,7 +220,7 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 	}
 
 	private void loadClassPath(final ClassLoader contextClassLoader,
-			final List<URL> urls) {
+							   final List<URL> urls) {
 		if (urls.size() <= 0)
 			return;
 
@@ -231,7 +239,7 @@ public class JavassistMojo extends AbstractMojo implements ILogger {
 
 	@Override
 	public void addMessage(File file, int line, int pos, String message,
-			Throwable e) {
+						   Throwable e) {
 		buildContext.addMessage(file, line, pos, message,
 				BuildContext.SEVERITY_ERROR, e);
 	}
