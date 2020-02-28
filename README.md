@@ -62,6 +62,7 @@ To make this work create the following setup:
 
 
 - **Project A-android**, containing nothing except a pom.xml
+(This can also be part of project A causing the compiled classfiles to be overridden)
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
