@@ -26,17 +26,17 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<javassist.version>3.20.0-GA</javassist.version>
-		<slf4j.version>1.7.13</slf4j.version>
-		<guava.version>19.0</guava.version>
-		<commons.io.version>2.4</commons.io.version>
+		<javassist.version>3.26.0-GA</javassist.version>
+		<slf4j.version>1.7.30</slf4j.version>
+		<guava.version>28.2-jre</guava.version>
+		<commons.io.version>2.6</commons.io.version>
 		<plexus.version>0.0.7</plexus.version>
 
-		<maven.version>3.3.9</maven.version>
-		<maven-annotations-plugin.version>3.4</maven-annotations-plugin.version>
-		<maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
-		<maven-gpg-plugin.version>1.4</maven-gpg-plugin.version>
-		<maven-plugin-plugin.version>3.2</maven-plugin-plugin.version>
+		<maven.version>3.6.3</maven.version>
+		<maven-annotations-plugin.version>3.6.0</maven-annotations-plugin.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+		<maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+		<maven-plugin-plugin.version>3.6.0</maven-plugin-plugin.version>
 	</properties>
 
 	<modules>
