@@ -21,7 +21,7 @@ public class ClassNameJarIterator implements ClassFileIterator {
 			final BuildContext buildContext) {
 
 		jarFile = new File(classPath);
-		if (buildContext.hasDelta(classPath)) {
+		if (buildContext.hasDelta(classPath) && jarFile.exists()) {
 			List<String> classNames = new ArrayList<>();
 			try {
 				JarInputStream jarFileStream = new JarInputStream(
