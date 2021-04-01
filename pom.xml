@@ -28,10 +28,10 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<javassist.version>3.26.0-GA</javassist.version>
+		<javassist.version>3.27.0-GA</javassist.version>
 		<slf4j.version>1.7.30</slf4j.version>
-		<guava.version>28.2-jre</guava.version>
-		<commons.io.version>2.6</commons.io.version>
+		<guava.version>30.1.1-jre</guava.version>
+		<commons.io.version>2.8.0</commons.io.version>
 		<plexus.version>0.0.7</plexus.version>
 
 		<maven.version>3.6.3</maven.version>
